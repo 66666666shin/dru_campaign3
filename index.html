@@ -3,27 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>クロスワード：Aハイブリッド完全版</title>
+    <title>クロスワード：ハイブリッド決定版</title>
     <style>
         :root { --cell-size: 45px; --primary: #3498db; --success: #27ae60; --danger: #e63946; --warning: #f1c40f; }
         body { font-family: sans-serif; text-align: center; background: #fdf6e3; color: #5d4037; margin: 0; padding: env(safe-area-inset-top) 10px 100px 10px; }
         
+        /* スマホ向け：カギのリアルタイム表示 */
         #active-hint-banner { position: sticky; top: 0; background: #333; color: #fff; padding: 10px; z-index: 1000; font-weight: bold; min-height: 1.2em; border-radius: 0 0 10px 10px; margin: -10px -10px 15px -10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: none; }
         body.is-playing #active-hint-banner { display: block; }
 
         .container { max-width: 950px; margin: auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border: 2px solid #d4a373; }
         
-        table { border-collapse: collapse; margin: 10px auto; background: #5d4037; table-layout: fixed; width: auto; }
-        td { width: var(--cell-size); height: var(--cell-size); border: 1px solid #5d4037; position: relative; background: white; padding: 0; box-sizing: border-box; }
+        table { border-collapse: collapse; margin: 10px auto; background: #5d4037; table-layout: fixed; }
+        td { width: var(--cell-size); height: var(--cell-size); border: 1px solid #5d4037; position: relative; background: white; padding: 0; }
         td.black { background: #333 !important; }
         td.is-target { outline: 2px solid var(--danger); outline-offset: -2px; }
+        td.error-cell { background: #ffcccc !important; animation: blink 1s infinite; }
+        @keyframes blink { 50% { background: #ffaaaa; } }
         
-        input.cell-in { width: 100%; height: 100%; border: none; text-align: center; font-size: 20px; font-weight: bold; outline: none; background: transparent; -webkit-appearance: none; border-radius: 0; padding: 0; line-height: var(--cell-size); }
+        input.cell-in { width: 100%; height: 100%; border: none; text-align: center; font-size: 20px; font-weight: bold; outline: none; background: transparent; -webkit-appearance: none; border-radius: 0; }
         input.cell-in:focus { background: #e3f2fd; }
 
-        /* ABCラベルの位置を固定（右下に絶対配置） */
-        .num { position: absolute; top: 1px; left: 1px; font-size: 10px; color: #666; pointer-events: none; z-index: 5; background: rgba(255,255,255,0.8); line-height: 1; padding: 1px; }
-        .keyword-label { position: absolute; bottom: 1px; right: 1px; font-size: 11px; color: var(--danger); font-weight: bold; border: 1px solid var(--danger); border-radius: 2px; line-height: 1; padding: 1px; pointer-events: none; background: rgba(255,255,255,0.9); z-index: 6; }
+        .num { position: absolute; top: 1px; left: 1px; font-size: 9px; color: #666; pointer-events: none; z-index: 5; background: rgba(255,255,255,0.7); line-height: 1; }
+        .keyword-label { position: absolute; bottom: 1px; right: 1px; font-size: 10px; color: var(--danger); font-weight: bold; border: 1px solid var(--danger); border-radius: 2px; line-height: 1; padding: 1px; pointer-events: none; background: white; z-index: 6; }
         
         #admin-panel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c3e50; color: white; padding: 20px; box-sizing: border-box; z-index: 2000; overflow-y: auto; text-align: left; }
         .tab-btn { padding: 10px; cursor: pointer; background: #34495e; border: none; color: white; margin-right: 5px; border-radius: 5px; }
@@ -33,12 +35,12 @@
         .mode-btn.active { background: var(--warning); color: #000; font-weight: bold; }
 
         @media (max-width: 600px) {
-            :root { --cell-size: 12vw; }
-            .container { padding: 5px; border-radius: 0; border: none; }
-            input.cell-in { font-size: 18px; }
+            :root { --cell-size: 13vw; }
+            .container { padding: 10px; border-radius: 0; }
+            #hints-display { width: 100% !important; margin-top: 20px; }
         }
 
-        .char-slot { display: inline-block; width: 32px; height: 32px; border: 2px solid var(--danger); border-radius: 4px; margin: 4px 2px; line-height: 32px; text-align: center; background: white; font-weight: bold; color: var(--danger); }
+        .char-slot { display: inline-block; width: 30px; height: 30px; border: 2px solid var(--danger); border-radius: 4px; margin: 0 2px; line-height: 30px; text-align: center; background: white; font-weight: bold; color: var(--danger); }
         .save-btn { background: var(--success); color: white; border: none; padding: 15px; cursor: pointer; border-radius: 6px; font-weight: bold; width: 100%; margin-top: 10px; font-size: 16px; }
     </style>
 </head>
@@ -48,14 +50,14 @@
 
 <div class="container">
     <h2 id="stage-title" onclick="handleTitleClick()">STAGE 1</h2>
-    <div style="display:flex; justify-content: center; gap: 15px; align-items: flex-start; flex-wrap: wrap;">
+    <div style="display:flex; justify-content: center; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
         <div id="game-board-area"></div>
-        <div id="hints-display" style="text-align:left; font-size:14px; background:#fefae0; padding:15px; border-radius:8px; width: 280px; box-sizing: border-box;">
+        <div id="hints-display" style="text-align:left; font-size:14px; background:#fefae0; padding:15px; border-radius:8px; width: 280px;">
             <b>【ヨコのカギ】</b><div id="view-hints-yoko"></div><br>
             <b>【タテのカギ】</b><div id="view-hints-tate"></div>
         </div>
     </div>
-    <div style="margin: 15px 0;">合言葉：<div id="keyword-slots"></div></div>
+    <div style="margin: 15px 0;">合言葉：<span id="keyword-slots"></span></div>
     <div id="status-msg"></div>
 </div>
 
@@ -96,17 +98,38 @@
 </div>
 
 <script>
-// ここに管理画面からコピーしたデータを貼り付けてください
-let config ={"rows":5,"cols":5,"correct":"スイカ","url":"https://www.google.com/?hl=ja","cells":{"1-0":{"char":"ス","isBlack":false},"1-1":{"char":"イ","isBlack":false},"1-2":{"char":"カ","isBlack":false},"2-0":{"char":"イ","isBlack":false},"2-1":{"char":"カ","isBlack":false},"2-2":{"char":"カ","isBlack":false},"3-0":{"char":"カ","isBlack":false},"4-0":{"char":"メ","isBlack":false},"0-0":{"char":"ス","isBlack":false},"0-1":{"char":"イ","isBlack":false},"0-2":{"char":"カ","isBlack":false}},"targets":[],"hints":["夏といえば！縞模様の果実","刺身がおいしい海の生き物","歩みの遅い爬虫類"],"answers":["スイカ","イカ","カメ"],"keywordCells":[{"r":1,"c":0,"label":"A"},{"r":2,"c":0,"label":"B"},{"r":3,"c":0,"label":"C"}]}
+const DICTIONARY = {
+    "ア": {ans: "アイス", hint: "夏に食べたい冷たいお菓子"}, "イ": {ans: "イカ", hint: "刺身がおいしい海の生き物"},
+    "ウ": {ans: "ウシ", hint: "モーと鳴く動物"}, "エ": {ans: "エビ", hint: "天ぷらでおなじみの甲殻類"},
+    "オ": {ans: "オニ", hint: "節分で豆を投げられる相手"}, "カ": {ans: "カメ", hint: "歩みの遅い爬虫類"},
+    "キ": {ans: "キリン", hint: "首がとても長い動物"}, "ク": {ans: "クマ", hint: "冬眠する森の大きな動物"},
+    "ケ": {ans: "ケーキ", hint: "誕生日に欠かせない洋菓子"}, "コ": {ans: "コアラ", hint: "ユーカリを食べる動物"},
+    "サ": {ans: "サクラ", hint: "春に咲く日本の代表的な花"}, "シ": {ans: "シカ", hint: "角がある山の動物"},
+    "ス": {ans: "スイカ", hint: "夏といえば！縞模様の果実"}, "セ": {ans: "セミ", hint: "夏にミンミンと鳴く虫"},
+    "ソ": {ans: "ソラ", hint: "見上げればそこにある青いもの"}, "タ": {ans: "タコ", hint: "足が8本ある海の生き物"},
+    "チ": {ans: "チョコ", hint: "バレンタインに贈るお菓子"}, "ツ": {ans: "ツクシ", hint: "春に土から顔を出す野草"},
+    "テ": {ans: "テレビ", hint: "番組を見るための家電"}, "ト": {ans: "トラ", hint: "黄色の体に黒い縞模様の猛獣"},
+    "ナ": {ans: "ナシ", hint: "シャリシャリした秋の果物"}, "ニ": {ans: "ニジ", hint: "空にかかる七色の橋"},
+    "ヌ": {ans: "ヌマ", hint: "底なしなこともある水辺"}, "ネ": {ans: "ネコ", hint: "ニャーと鳴く動物"},
+    "ノ": {ans: "ノド", hint: "乾燥すると痛くなる場所"}, "ハ": {ans: "ハサミ", hint: "紙を切るための道具"},
+    "ヒ": {ans: "ヒマワリ", hint: "太陽を追いかける夏の花"}, "フ": {ans: "フネ", hint: "海の上を走る乗り物"},
+    "ヘ": {ans: "ヘビ", hint: "足がないニョロニョロした生き物"}, "ホ": {ans: "ホシ", hint: "夜空にキラキラ輝くもの"},
+    "マ": {ans: "マクラ", hint: "寝る時に頭をのせるもの"}, "ミ": {ans: "ミカン", hint: "冬にコタツで食べる果物"},
+    "ム": {ans: "ムシ", hint: "カブトムシなどの総称"}, "メ": {ans: "メガネ", hint: "視力を助ける道具"},
+    "モ": {ans: "モモ", hint: "ピンク色の甘い果物"}, "ヤ": {ans: "ヤギ", hint: "メェ〜と鳴く動物"},
+    "ユ": {ans: "ユキ", hint: "冬に空から降る白い結晶"}, "ヨ": {ans: "ヨル", hint: "暗い時間帯"},
+    "ラ": {ans: "ラッパ", hint: "プップーと鳴らす楽器"}, "リ": {ans: "リンゴ", hint: "赤い果実。ニュートンのリンゴ"},
+    "ル": {ans: "ルビー", hint: "赤い宝石"}, "レ": {ans: "レモン", hint: "黄色くて酸っぱい果実"},
+    "ロ": {ans: "ロケット", hint: "宇宙へ行く乗り物"}, "ワ": {ans: "ワニ", hint: "大きな口の爬虫類"}
+};
 
+let config = { rows: 5, cols: 5, correct: "スイカ", url: "", cells: {}, targets: [], hints: [], answers: [], keywordCells: [] };
 let currentTargetIdx = -1;
 let isComposing = false;
 let controlMode = 'arrange';
 
-const DICTIONARY = { "ア": {ans: "アイス", hint: "夏に食べたい冷たいお菓子"}, "ス": {ans: "スイカ", hint: "夏といえば！縞模様の果実"}, "イ": {ans: "イカ", hint: "刺身がおいしい海の生き物"}, "カ": {ans: "カメ", hint: "歩みの遅い爬虫類"} }; // 省略
-
 window.onload = () => {
-    const saved = localStorage.getItem('crossword_hybrid_v3');
+    const saved = localStorage.getItem('crossword_hybrid_final_v2');
     if(saved) config = JSON.parse(saved);
     renderGame();
 };
@@ -123,7 +146,7 @@ function handleTitleClick() {
 function openAdmin() {
     document.body.classList.remove('is-playing');
     document.getElementById('admin-panel').style.display = 'block';
-    document.getElementById('adm-correct').value = config.correct || "";
+    document.getElementById('adm-correct').value = config.correct;
     document.getElementById('adm-url').value = config.url || "";
     renderHintInputs();
 }
@@ -153,4 +176,183 @@ function setupInputEvents(el, type, r, c) {
     el.addEventListener('focus', () => { if(type==='game') highlightHint(r, c); });
     el.addEventListener('compositionstart', () => isComposing = true);
     el.addEventListener('compositionend', () => { isComposing = false; setTimeout(() => onInputFinalized(el, type, r, c), 10); });
-    el.addEventListener('input', () => { if(!isComposing) onInputFinalized(el,
+    el.addEventListener('input', () => { if(!isComposing) onInputFinalized(el, type, r, c); });
+    el.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter') { e.preventDefault(); focusNext(type, r, c); }
+        if(e.key === 'Backspace' && el.value === '') { e.preventDefault(); focusPrev(type, r, c); }
+    });
+}
+
+function onInputFinalized(el, type, r, c) {
+    let char = toKatakana(el.value.charAt(el.value.length - 1) || "");
+    el.value = char;
+    if(type === 'edit') config.cells[`${r}-${c}`] = { char: char, isBlack: false };
+    if(char) focusNext(type, r, c);
+    if(type === 'game') handleInput();
+}
+
+function focusNext(type, r, c) {
+    let n = document.getElementById(`${type}-${r}-${c+1}`) || document.getElementById(`${type}-${r+1}-0`);
+    if(n) n.focus();
+}
+function focusPrev(type, r, c) {
+    let p = document.getElementById(`${type}-${r}-${c-1}`) || (r > 0 ? document.getElementById(`${type}-${r-1}-${config.cols-1}`) : null);
+    if(p) { p.focus(); p.value = ''; }
+}
+
+function renderGame() {
+    let html = '<table>';
+    for(let r=0; r<config.rows; r++) {
+        html += '<tr>';
+        for(let c=0; c<config.cols; c++) {
+            const id = `${r}-${c}`, cell = config.cells[id] || {};
+            if(cell.isBlack) html += `<td class="black"></td>`;
+            else {
+                const tIdx = config.targets.findIndex(t => t && t.r === r && t.c === c);
+                const kw = config.keywordCells.find(k => k.r === r && k.c === c);
+                html += `<td>${tIdx!==-1?`<span class="num">${tIdx+1}</span>`:""}${kw?`<span class="keyword-label">${kw.label}</span>`:""}
+                <input type="text" class="cell-in" id="game-${id}" autocomplete="off" enterkeyhint="next"></td>`;
+            }
+        }
+        html += '</tr>';
+    }
+    document.getElementById('game-board-area').innerHTML = html + '</table>';
+    for(let r=0; r<config.rows; r++) for(let c=0; c<config.cols; c++) {
+        const el = document.getElementById(`game-${r}-${c}`); if(el) setupInputEvents(el, 'game', r, c);
+    }
+    document.getElementById('keyword-slots').innerHTML = (config.keywordCells || []).map((_,i)=>`<span class="char-slot" id="slot-${i}"></span>`).join('');
+    updateHintsDisplay();
+    handleInput();
+}
+
+function updateHintsDisplay() {
+    let yoko = "", tate = "";
+    config.targets.forEach((t, i) => {
+        if(!t) return;
+        const h = `<b>${i+1}</b>: ${config.hints[i]}<br>`;
+        if(t.dir === 'yoko') yoko += h; else tate += h;
+    });
+    document.getElementById('view-hints-yoko').innerHTML = yoko || "なし";
+    document.getElementById('view-hints-tate').innerHTML = tate || "なし";
+}
+
+function handleInput() {
+    let res = "";
+    (config.keywordCells || []).forEach((kw, i) => {
+        const val = document.getElementById(`game-${kw.r}-${kw.c}`)?.value || "";
+        if(document.getElementById(`slot-${i}`)) document.getElementById(`slot-${i}`).textContent = val;
+        res += val;
+    });
+    const msg = document.getElementById('status-msg');
+    if(res === config.correct && res !== "") {
+        msg.innerHTML = `<div style="color:green; font-weight:bold; margin-top:10px;">🎉正解！<br><a href="${config.url}" target="_blank" style="display:inline-block; margin-top:10px; padding:10px 20px; background:var(--success); color:white; text-decoration:none; border-radius:5px;">応募はこちら</a></div>`;
+    } else {
+        msg.innerHTML = "";
+    }
+}
+
+function generateHintsFromKeyword() {
+    const keyword = toKatakana(document.getElementById('adm-correct').value);
+    if(!keyword) return;
+    config.answers = []; config.hints = []; config.targets = [];
+    for(let char of keyword) {
+        if(DICTIONARY[char]) { config.answers.push(DICTIONARY[char].ans); config.hints.push(DICTIONARY[char].hint); }
+        else { config.answers.push(char); config.hints.push(`${char}で始まる言葉を入力`); }
+    }
+    renderHintInputs();
+}
+
+function renderHintInputs() {
+    const container = document.getElementById('hint-list-container'); container.innerHTML = "";
+    config.answers.forEach((ans, i) => {
+        const div = document.createElement('div'); div.style.marginBottom="5px";
+        div.innerHTML = `${i+1} <input type="text" value="${ans}" onblur="config.answers[${i}]=toKatakana(this.value)" style="width:80px;"> 
+        <input type="text" value="${config.hints[i]||''}" onchange="config.hints[${i}]=this.value" style="width:60%;">`;
+        container.appendChild(div);
+    });
+}
+
+function renderEditor() {
+    let html = '<table>';
+    for(let r=0; r<config.rows; r++) {
+        html += '<tr>';
+        for(let c=0; c<config.cols; c++) {
+            const id = `${r}-${c}`, cell = config.cells[id] || {char:"", isBlack:false};
+            const tIdx = config.targets.findIndex(t => t && t.r === r && t.c === c);
+            const kw = (config.keywordCells || []).find(k => k.r === r && k.c === c);
+            let cls = cell.isBlack ? "black" : (tIdx !== -1 ? "is-target" : "");
+            html += `<td class="${cls}" onclick="onCellClick(event,${r},${c})" ondblclick="onCellDblClick(event,${r},${c})">
+                ${tIdx!==-1?`<span class="num">${tIdx+1}</span>`:""}${kw?`<span class="keyword-label">${kw.label}</span>`:""}
+                <input type="text" class="cell-in" id="edit-${id}" value="${cell.char||""}" autocomplete="off"></td>`;
+        }
+        html += '</tr>';
+    }
+    document.getElementById('editor-board-area').innerHTML = html + '</table>';
+
+    // 重要：ここをリセットすることでボタンが増えるのを防ぐ
+    const btnArea = document.getElementById('target-btns');
+    btnArea.innerHTML = ""; 
+
+    config.answers.forEach((ans, i) => {
+        const btn = document.createElement('button'); 
+        btn.className = 'mode-btn'; 
+        if(i === currentTargetIdx) btn.classList.add('active');
+        btn.textContent = `${i+1}:${ans || '?'}`;
+        btn.onclick = () => { 
+            currentTargetIdx = i; 
+            document.querySelectorAll('#target-btns button').forEach(b=>b.classList.remove('active')); 
+            btn.classList.add('active'); 
+        };
+        btnArea.appendChild(btn);
+    });
+}
+
+function onCellClick(e, r, c) {
+    if(!config.keywordCells) config.keywordCells = [];
+    if (controlMode === 'keyword' || e.altKey) {
+        const idx = config.keywordCells.findIndex(k => k.r === r && k.c === c);
+        if (idx !== -1) config.keywordCells.splice(idx, 1);
+        else {
+            const used = config.keywordCells.map(k => k.label);
+            let label = ""; for(let i=0; i<26; i++) { let char = String.fromCharCode(65+i); if(!used.includes(char)){label=char; break;}}
+            config.keywordCells.push({r, c, label});
+        }
+        config.keywordCells.sort((a,b)=>a.label.localeCompare(b.label));
+        renderEditor(); return;
+    }
+    if (controlMode === 'black') { onCellDblClick(e, r, c); return; }
+    if(currentTargetIdx === -1) return;
+    const dir = e.shiftKey ? 'tate' : 'yoko', ans = config.answers[currentTargetIdx];
+    config.targets[currentTargetIdx] = { r, c, dir };
+    for(let i=0; i<ans.length; i++){
+        let rr=r+(dir==='tate'?i:0), cc=c+(dir==='yoko'?i:0);
+        if(rr<config.rows && cc<config.cols) config.cells[`${rr}-${cc}`] = {char:ans[i], isBlack:false};
+    }
+    renderEditor();
+}
+
+function onCellDblClick(e, r, c) {
+    const id = `${r}-${c}`; config.cells[id] = { isBlack: !config.cells[id]?.isBlack, char: "" }; renderEditor();
+}
+
+function switchTab(i) {
+    document.querySelectorAll('.tab-content').forEach((t, idx) => t.style.display = i===idx?'block':'none');
+    document.querySelectorAll('.tab-btn').forEach((b, idx) => b.classList.toggle('active', i===idx));
+    if(i===1) renderEditor();
+}
+
+function setControlMode(m) { controlMode = m; document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active')); document.getElementById(`m-${m}`).classList.add('active'); }
+
+function saveAll() {
+    config.correct = toKatakana(document.getElementById('adm-correct').value);
+    config.url = document.getElementById('adm-url').value;
+    localStorage.setItem('crossword_hybrid_final_v2', JSON.stringify(config));
+    renderGame(); closeAdmin();
+}
+
+function exportData() { document.getElementById('json-io').value = JSON.stringify(config); }
+function importData() { try { config = JSON.parse(document.getElementById('json-io').value); renderGame(); closeAdmin(); } catch(e){alert("データが正しくありません");} }
+function addHintRow() { config.answers.push(""); config.hints.push(""); renderHintInputs(); }
+</script>
+</body>
+</html>
