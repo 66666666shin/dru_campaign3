@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>クロスワード：決定版</title>
+    <title>組合キャンペーンクロスワード</title>
     <style>
         :root { --cell-size: 45px; --primary: #3498db; --success: #27ae60; --danger: #e63946; --warning: #f1c40f; }
         body { font-family: sans-serif; text-align: center; background: #fdf6e3; color: #5d4037; margin: 0; padding: env(safe-area-inset-top) 10px 100px 10px; }
@@ -123,7 +123,7 @@ const DICTIONARY = {
     "ロ": {ans: "ロケット", hint: "宇宙へ行く乗り物"}, "ワ": {ans: "ワニ", hint: "大きな口の爬虫類"}
 };
 
-let config = { rows: 5, cols: 5, correct: "スイカ", url: "", cells: {}, targets: [], hints: [], answers: [], keywordCells: [] };
+let config = {"rows":5,"cols":5,"correct":"クミアイ","url":"https://www.google.com/?hl=ja","cells":{"1-0":{"isBlack":false,"char":""},"1-1":{"isBlack":false,"char":""},"1-2":{"char":"イ","isBlack":false},"2-0":{"isBlack":false,"char":""},"2-1":{"char":"ミ","isBlack":false},"2-2":{"char":"カ","isBlack":false},"3-0":{"isBlack":false,"char":""},"4-0":{"isBlack":false,"char":""},"0-0":{"isBlack":false,"char":""},"0-1":{"char":"ク","isBlack":false},"0-2":{"char":"マ","isBlack":false},"3-1":{"isBlack":false,"char":""},"4-1":{"isBlack":false,"char":""},"2-3":{"char":"ン","isBlack":false},"1-4":{"char":"ア","isBlack":false},"2-4":{"char":"イ","isBlack":false},"3-4":{"char":"ス","isBlack":false}},"targets":[{"r":0,"c":1,"dir":"yoko"},{"r":2,"c":1,"dir":"yoko"},{"r":1,"c":4,"dir":"tate"},{"r":1,"c":2,"dir":"tate"}],"hints":["冬眠する森の大きな動物","冬にコタツで食べる果物","夏に食べたい冷たいお菓子","刺身がおいしい海の生き物"],"answers":["クマ","ミカン","アイス","イカ"],"keywordCells":[{"r":0,"c":1,"label":"A"},{"r":2,"c":1,"label":"B"},{"r":1,"c":4,"label":"C"},{"r":1,"c":2,"label":"D"}]};
 let currentTargetIdx = -1;
 let isComposing = false;
 let controlMode = 'arrange';
