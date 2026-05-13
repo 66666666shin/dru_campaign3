@@ -6,11 +6,44 @@
     <title>DRUクロスワード</title>
     <style>
         :root { --cell-size: 45px; --primary: #3498db; --success: #27ae60; --danger: #e63946; --warning: #f1c40f; }
-        body { font-family: sans-serif; text-align: center; background: #fdf6e3; color: #5d4037; margin: 0; padding: env(safe-area-inset-top) 10px 100px 10px; }
+        body { font-family: sans-serif; text-align: center; background: #fdf6e3; color: #5d4037; margin: 0; padding: 10px 10px 100px 10px; }
         
-        /* スマホ向け：カギのリアルタイム表示 */
-        #active-hint-banner { position: sticky; top: 0; background: #333; color: #fff; padding: 10px; z-index: 1000; font-weight: bold; min-height: 1.2em; border-radius: 0 0 10px 10px; margin: -10px -10px 15px -10px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); display: none; }
+        /* ヒント表示エリアの共通スタイル */
+        #active-hint-banner { 
+            background: #333; 
+            color: #fff; 
+            padding: 12px; 
+            font-weight: bold; 
+            min-height: 1.2em; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
+            display: none; 
+        }
         body.is-playing #active-hint-banner { display: block; }
+
+        /* PC版：上部に固定 */
+        @media (min-width: 601px) {
+            #active-hint-banner { 
+                position: sticky; 
+                top: 0; 
+                z-index: 1000; 
+                border-radius: 0 0 10px 10px; 
+                margin: -10px -10px 15px -10px; 
+            }
+        }
+
+        /* スマホ版：盤面の下に配置（固定解除） */
+        @media (max-width: 600px) {
+            :root { --cell-size: 12vw; }
+            #active-hint-banner { 
+                position: relative; /* 固定を解除 */
+                margin: 15px auto; 
+                border-radius: 8px; 
+                width: 95%;
+                font-size: 14px;
+            }
+            .container { padding: 5px; border-radius: 0; border: none; }
+            input.cell-in { font-size: 18px; }
+        }
 
         .container { max-width: 950px; margin: auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border: 2px solid #d4a373; }
         
@@ -22,7 +55,6 @@
         input.cell-in { width: 100%; height: 100%; border: none; text-align: center; font-size: 20px; font-weight: bold; outline: none; background: transparent; -webkit-appearance: none; border-radius: 0; padding: 0; line-height: var(--cell-size); }
         input.cell-in:focus { background: #e3f2fd; }
 
-        /* 番号と合言葉ラベルの絶対配置 */
         .num { position: absolute; top: 1px; left: 1px; font-size: 10px; color: #666; pointer-events: none; z-index: 5; background: rgba(255,255,255,0.8); line-height: 1; padding: 1px; }
         .keyword-label { position: absolute; bottom: 1px; right: 1px; font-size: 11px; color: var(--danger); font-weight: bold; border: 1px solid var(--danger); border-radius: 2px; line-height: 1; padding: 1px; pointer-events: none; background: rgba(255,255,255,0.9); z-index: 6; }
         
@@ -33,29 +65,26 @@
         .mode-btn { background: #34495e; color: white; border: 1px solid #555; padding: 8px 12px; border-radius: 4px; cursor: pointer; margin-bottom: 5px; margin-right: 5px; }
         .mode-btn.active { background: var(--warning); color: #000; font-weight: bold; }
 
-        @media (max-width: 600px) {
-            :root { --cell-size: 12vw; }
-            .container { padding: 5px; border-radius: 0; border: none; }
-            input.cell-in { font-size: 18px; }
-        }
-
         .char-slot { display: inline-block; width: 32px; height: 32px; border: 2px solid var(--danger); border-radius: 4px; margin: 4px 2px; line-height: 32px; text-align: center; background: white; font-weight: bold; color: var(--danger); }
         .save-btn { background: var(--success); color: white; border: none; padding: 15px; cursor: pointer; border-radius: 6px; font-weight: bold; width: 100%; margin-top: 10px; font-size: 16px; }
     </style>
 </head>
 <body class="is-playing">
 
-<div id="active-hint-banner">カギを選択してください</div>
-
 <div class="container">
     <h2 id="stage-title" onclick="handleTitleClick()">STAGE 1</h2>
+    
     <div style="display:flex; justify-content: center; gap: 15px; align-items: flex-start; flex-wrap: wrap;">
         <div id="game-board-area"></div>
+
+        <div id="active-hint-banner">カギを選択してください</div>
+
         <div id="hints-display" style="text-align:left; font-size:14px; background:#fefae0; padding:15px; border-radius:8px; width: 280px; box-sizing: border-box;">
             <b>【ヨコのカギ】</b><div id="view-hints-yoko"></div><br>
             <b>【タテのカギ】</b><div id="view-hints-tate"></div>
         </div>
     </div>
+
     <div style="margin: 15px 0;">合言葉：<div id="keyword-slots"></div></div>
     <div id="status-msg"></div>
 </div>
@@ -67,7 +96,6 @@
         <button class="tab-btn" onclick="switchTab(1)">2. 盤面作成</button>
         <button class="tab-btn" onclick="switchTab(2)">3. データ出力</button>
     </div>
-
     <div id="tab0" class="tab-content" style="display:block;">
         <div style="background:#34495e; padding:10px; border-radius:8px; margin-bottom:10px;">
             合言葉正解: <input type="text" id="adm-correct" style="width:100px;">
@@ -77,7 +105,6 @@
         <div id="hint-list-container"></div>
         <button onclick="addHintRow()" style="margin-top:10px; padding:8px; cursor:pointer;">＋ カギ追加</button>
     </div>
-
     <div id="tab1" class="tab-content">
         <div class="mode-selector" style="margin-bottom:10px;">
             <button class="mode-btn active" id="m-arrange" onclick="setControlMode('arrange')">配置(Click/Shift)</button>
@@ -87,7 +114,6 @@
         <div id="target-btns" style="margin-bottom:10px; min-height:40px; border:1px dashed #666; padding:5px;"></div>
         <div id="editor-board-area"></div>
     </div>
-
     <div id="tab2" class="tab-content">
         <textarea id="json-io" style="width:100%; height:100px;"></textarea>
         <button onclick="exportData()">コピー</button> <button onclick="importData()">読み込み</button>
@@ -97,41 +123,16 @@
 </div>
 
 <script>
-// --- 管理画面のデータ出力からコピーした内容をここに貼り付けてください ---
-let config ={"rows":5,"cols":5,"correct":"クミアイ","url":"https://forms.gle/GpErZccdbmYEmWRy8","cells":{"0-1":{"char":"ク","isBlack":false},"0-2":{"isBlack":false,"char":""},"1-0":{"char":"ミ","isBlack":false},"1-1":{"isBlack":false,"char":""},"1-2":{"isBlack":false,"char":""},"2-2":{"char":"ア","isBlack":false},"2-3":{"isBlack":false,"char":""},"2-4":{"isBlack":false,"char":""},"3-0":{"char":"イ","isBlack":false},"4-0":{"char":"カ","isBlack":false},"2-0":{"isBlack":true,"char":""},"1-3":{"isBlack":true,"char":""},"0-0":{"isBlack":true,"char":""},"0-3":{"isBlack":true,"char":""},"2-1":{"isBlack":true,"char":""},"3-2":{"isBlack":true,"char":""},"3-3":{"isBlack":true,"char":""},"4-3":{"isBlack":true,"char":""},"3-4":{"isBlack":true,"char":""},"4-1":{"isBlack":true,"char":""},"4-2":{"isBlack":true,"char":""},"4-4":{"isBlack":true,"char":""},"3-1":{"isBlack":true,"char":""},"1-4":{"isBlack":true,"char":""},"0-4":{"isBlack":true,"char":""}},"targets":[{"r":0,"c":1,"dir":"yoko"},{"r":1,"c":0,"dir":"yoko"},{"r":2,"c":2,"dir":"yoko"},{"r":3,"c":0,"dir":"tate"}],"hints":["冬眠する森の大きな動物","冬にコタツで食べる果物","夏に食べたい冷たいお菓子","刺身がおいしい海の生き物"],"answers":["クマ","ミカン","アイス","イカ"],"keywordCells":[{"r":0,"c":1,"label":"A"},{"r":1,"c":0,"label":"B"},{"r":2,"c":2,"label":"C"},{"r":3,"c":0,"label":"D"}]};
+// 【重要】ここに管理画面から出力したJSONデータを貼り付けてください
+let config = {"rows":5,"cols":5,"correct":"クミアイ","url":"https://forms.gle/GpErZccdbmYEmWRy8","cells":{"0-1":{"char":"ク","isBlack":false},"0-2":{"isBlack":false,"char":""},"1-0":{"char":"ミ","isBlack":false},"1-1":{"isBlack":false,"char":""},"1-2":{"isBlack":false,"char":""},"2-2":{"char":"ア","isBlack":false},"2-3":{"isBlack":false,"char":""},"2-4":{"isBlack":false,"char":""},"3-0":{"char":"イ","isBlack":false},"4-0":{"char":"カ","isBlack":false},"2-0":{"isBlack":true,"char":""},"1-3":{"isBlack":true,"char":""},"0-0":{"isBlack":true,"char":""},"0-3":{"isBlack":true,"char":""},"2-1":{"isBlack":true,"char":""},"3-2":{"isBlack":true,"char":""},"3-3":{"isBlack":true,"char":""},"4-3":{"isBlack":true,"char":""},"3-4":{"isBlack":true,"char":""},"4-1":{"isBlack":true,"char":""},"4-2":{"isBlack":true,"char":""},"4-4":{"isBlack":true,"char":""},"3-1":{"isBlack":true,"char":""},"1-4":{"isBlack":true,"char":""},"0-4":{"isBlack":true,"char":""}},"targets":[{"r":0,"c":1,"dir":"yoko"},{"r":1,"c":0,"dir":"yoko"},{"r":2,"c":2,"dir":"yoko"},{"r":3,"c":0,"dir":"tate"}],"hints":["冬眠する森の大きな動物","冬にコタツで食べる果物","夏に食べたい冷たいお菓子","刺身がおいしい海の生き物"],"answers":["クマ","ミカン","アイス","イカ"],"keywordCells":[{"r":0,"c":1,"label":"A"},{"r":1,"c":0,"label":"B"},{"r":2,"c":2,"label":"C"},{"r":3,"c":0,"label":"D"}]};
 
 let currentTargetIdx = -1;
 let isComposing = false;
 let controlMode = 'arrange';
 
-// 自動生成用辞書
-const DICTIONARY = {
-    "ア": {ans: "アイス", hint: "夏に食べたい冷たいお菓子"}, "イ": {ans: "イカ", hint: "刺身がおいしい海の生き物"},
-    "ウ": {ans: "ウシ", hint: "モーと鳴く動物"}, "エ": {ans: "エビ", hint: "天ぷらでおなじみの甲殻類"},
-    "オ": {ans: "オニ", hint: "節分で豆を投げられる相手"}, "カ": {ans: "カメ", hint: "歩みの遅い爬虫類"},
-    "キ": {ans: "キリン", hint: "首がとても長い動物"}, "ク": {ans: "クマ", hint: "冬眠する森の大きな動物"},
-    "ケ": {ans: "ケーキ", hint: "誕生日に欠かせない洋菓子"}, "コ": {ans: "コアラ", hint: "ユーカリを食べる動物"},
-    "サ": {ans: "サクラ", hint: "春に咲く日本の代表的な花"}, "シ": {ans: "シカ", hint: "角がある山の動物"},
-    "ス": {ans: "スイカ", hint: "夏といえば！縞模様の果実"}, "セ": {ans: "セミ", hint: "夏にミンミンと鳴く虫"},
-    "ソ": {ans: "ソラ", hint: "見上げればそこにある青いもの"}, "タ": {ans: "タコ", hint: "足が8本ある海の生き物"},
-    "チ": {ans: "チョコ", hint: "バレンタインに贈るお菓子"}, "ツ": {ans: "ツクシ", hint: "春に土から顔を出す野草"},
-    "テ": {ans: "テレビ", hint: "番組を見るための家電"}, "ト": {ans: "トラ", hint: "黄色の体に黒い縞模様の猛獣"},
-    "ナ": {ans: "ナシ", hint: "シャリシャリした秋の果物"}, "ニ": {ans: "ニジ", hint: "空にかかる七色の橋"},
-    "ヌ": {ans: "ヌマ", hint: "底なしなこともある水辺"}, "ネ": {ans: "ネコ", hint: "ニャーと鳴く動物"},
-    "ノ": {ans: "ノド", hint: "乾燥すると痛くなる場所"}, "ハ": {ans: "ハサミ", hint: "紙を切るための道具"},
-    "ヒ": {ans: "ヒマワリ", hint: "太陽を追いかける夏の花"}, "フ": {ans: "フネ", hint: "海の上を走る乗り物"},
-    "ヘ": {ans: "ヘビ", hint: "足がないニョロニョロした生き物"}, "ホ": {ans: "ホシ", hint: "夜空にキラキラ輝くもの"},
-    "マ": {ans: "マクラ", hint: "寝る時に頭をのせるもの"}, "ミ": {ans: "ミカン", hint: "冬にコタツで食べる果物"},
-    "ム": {ans: "ムシ", hint: "カブトムシなどの総称"}, "メ": {ans: "メガネ", hint: "視力を助ける道具"},
-    "モ": {ans: "モモ", hint: "ピンク色の甘い果物"}, "ヤ": {ans: "ヤギ", hint: "メェ〜と鳴く動物"},
-    "ユ": {ans: "ユキ", hint: "冬に空から降る白い結晶"}, "ヨ": {ans: "ヨル", hint: "暗い時間帯"},
-    "ラ": {ans: "ラッパ", hint: "プップーと鳴らす楽器"}, "リ": {ans: "リンゴ", hint: "赤い果実。ニュートンのリンゴ"},
-    "ル": {ans: "ルビー", hint: "赤い宝石"}, "レ": {ans: "レモン", hint: "黄色くて酸っぱい果実"},
-    "ロ": {ans: "ロケット", hint: "宇宙へ行く乗り物"}, "ワ": {ans: "ワニ", hint: "大きな口の爬虫類"}
-};
+const DICTIONARY = { "ア": {ans: "アイス", hint: "夏に食べたい冷たいお菓子"}, "イ": {ans: "イカ", hint: "刺身がおいしい海の生き物"}, "ウ": {ans: "ウシ", hint: "モーと鳴く動物"}, "エ": {ans: "エビ", hint: "天ぷらでおなじみの甲殻類"}, "オ": {ans: "オニ", hint: "節分で豆を投げられる相手"}, "カ": {ans: "カメ", hint: "歩みの遅い爬虫類"}, "キ": {ans: "キリン", hint: "首がとても長い動物"}, "ク": {ans: "クマ", hint: "冬眠する森の大きな動物"}, "ケ": {ans: "ケーキ", hint: "誕生日に欠かせない洋菓子"}, "コ": {ans: "コアラ", hint: "ユーカリを食べる動物"}, "サ": {ans: "サクラ", hint: "春に咲く日本の代表的な花"}, "シ": {ans: "シカ", hint: "角がある山の動物"}, "ス": {ans: "スイカ", hint: "夏といえば！縞模様の果実"}, "セ": {ans: "セミ", hint: "夏にミンミンと鳴く虫"}, "ソ": {ans: "ソラ", hint: "見上げればそこにある青いもの"}, "タ": {ans: "タコ", hint: "足が8本ある海の生き物"}, "チ": {ans: "チョコ", hint: "バレンタインに贈るお菓子"}, "ツ": {ans: "ツクシ", hint: "春に土から顔を出す野草"}, "テ": {ans: "テレビ", hint: "番組を見るための家電"}, "ト": {ans: "トラ", hint: "黄色の体に黒い縞模様の猛獣"}, "ナ": {ans: "ナシ", hint: "シャリシャリした秋の果物"}, "ニ": {ans: "ニジ", hint: "空にかかる七色の橋"}, "ヌ": {ans: "ヌマ", hint: "底なしなこともある水辺"}, "ネ": {ans: "ネコ", hint: "ニャーと鳴く動物"}, "ノ": {ans: "ノド", hint: "乾燥すると痛くなる場所"}, "ハ": {ans: "ハサミ", hint: "紙を切るための道具"}, "ヒ": {ans: "ヒマワリ", hint: "太陽を追いかける夏の花"}, "フ": {ans: "フネ", hint: "海の上を走る乗り物"}, "ヘ": {ans: "ヘビ", hint: "足がないニョロニョロした生き物"}, "ホ": {ans: "ホシ", hint: "夜空にキラキラ輝くもの"}, "マ": {ans: "マクラ", hint: "寝る時に頭をのせるもの"}, "ミ": {ans: "ミカン", hint: "冬にコタツで食べる果物"}, "ム": {ans: "ムシ", hint: "カブトムシなどの総称"}, "メ": {ans: "メガネ", hint: "視力を助ける道具"}, "モ": {ans: "モモ", hint: "ピンク色の甘い果物"}, "ヤ": {ans: "ヤギ", hint: "メェ〜と鳴く動物"}, "ユ": {ans: "ユキ", hint: "冬に空から降る白い結晶"}, "ヨ": {ans: "ヨル", hint: "暗い時間帯"}, "ラ": {ans: "ラッパ", hint: "プップーと鳴らす楽器"}, "リ": {ans: "リンゴ", hint: "赤い果実。ニュートンのリンゴ"}, "ル": {ans: "ルビー", hint: "赤い宝石"}, "レ": {ans: "レモン", hint: "黄色くて酸っぱい果実"}, "ロ": {ans: "ロケット", hint: "宇宙へ行く乗り物"}, "ワ": {ans: "ワニ", hint: "大きな口の爬虫類"} };
 
 window.onload = () => {
-    // 既存のキャッシュに関わらず、埋め込みデータを強制反映
     localStorage.setItem('crossword_hybrid_v3', JSON.stringify(config));
     renderGame();
 };
@@ -292,7 +293,6 @@ function renderEditor() {
     }
     document.getElementById('editor-board-area').innerHTML = html + '</table>';
 
-    // ボタン増殖防止
     const btnArea = document.getElementById('target-btns');
     btnArea.innerHTML = ""; 
     config.answers.forEach((ans, i) => {
